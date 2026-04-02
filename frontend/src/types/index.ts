@@ -60,6 +60,7 @@ export interface RecordFromAPI {
   date: string;
   notes: string | null;
   user_id: number;
+  user_name: string | null;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
@@ -86,6 +87,7 @@ export function normalizeRecord(raw: RecordFromAPI): Record {
     date: raw.date,
     notes: raw.notes,
     userId: raw.user_id,
+    userName: raw.user_name || undefined,
   };
 }
 
@@ -97,11 +99,12 @@ export interface PaginatedResponse<T> {
   total: number;
 }
 
-// Backend dashboard summary response
 export interface SummaryFromAPI {
   total_income: number;
   total_expense: number;
   balance: number;
+  total_users?: number;
+  active_users?: number;
 }
 
 export interface SummaryData {
@@ -109,6 +112,8 @@ export interface SummaryData {
   totalExpense: number;
   balance: number;
   recordCount: number;
+  totalUsers?: number;
+  activeUsers?: number;
 }
 
 export function normalizeSummary(raw: SummaryFromAPI, recordCount?: number): SummaryData {
@@ -117,6 +122,8 @@ export function normalizeSummary(raw: SummaryFromAPI, recordCount?: number): Sum
     totalExpense: raw.total_expense,
     balance: raw.balance,
     recordCount: recordCount ?? 0,
+    totalUsers: raw.total_users,
+    activeUsers: raw.active_users,
   };
 }
 

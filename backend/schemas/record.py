@@ -32,6 +32,7 @@ class RecordPublic(RecordBase):
 
     id: int
     user_id: int
+    user_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     is_deleted: bool

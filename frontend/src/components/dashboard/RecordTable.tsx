@@ -57,7 +57,10 @@ export default function RecordTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/[0.06]">
-              {['Notes', 'Category', 'Type', 'Amount', 'Date', 'Actions'].map((header) => (
+              {(userRole === 'admin' || userRole === 'analyst'
+                ? ['User', 'Notes', 'Category', 'Type', 'Amount', 'Date', 'Actions']
+                : ['Notes', 'Category', 'Type', 'Amount', 'Date', 'Actions']
+              ).map((header) => (
                 <th
                   key={header}
                   className="px-5 py-4 text-left text-xs font-semibold text-navy-400 uppercase tracking-wider"
@@ -80,11 +83,18 @@ export default function RecordTable({
                   layout
                   className="border-b border-white/[0.03] hover:bg-white/[0.02] transition-colors duration-200 group"
                 >
+                  {(userRole === 'admin' || userRole === 'analyst') && (
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg gradient-purple-blue flex items-center justify-center text-[10px] font-bold text-white uppercase">
+                          {record.userName?.charAt(0) || 'U'}
+                        </div>
+                        <p className="text-sm font-medium text-white">{record.userName || 'Unknown User'}</p>
+                      </div>
+                    </td>
+                  )}
                   <td className="px-5 py-4">
-                    <p className="text-sm font-medium text-white">{record.notes || '—'}</p>
-                    {record.userName && (
-                      <p className="text-xs text-navy-400 mt-0.5">{record.userName}</p>
-                    )}
+                    <p className="text-sm text-navy-300">{record.notes || '—'}</p>
                   </td>
                   <td className="px-5 py-4">
                     <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-navy-700/50 text-xs font-medium text-navy-300">
@@ -117,7 +127,7 @@ export default function RecordTable({
                   <td className="px-5 py-4">
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <motion.button
-                        whileHover={{ scale: 1.15 }}
+                        whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onView?.(record)}
                         className="p-1.5 rounded-lg hover:bg-accent-blue/10 text-navy-400 hover:text-accent-blue transition-colors duration-200"

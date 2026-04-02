@@ -23,8 +23,9 @@ export default function Records() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [modalMode, setModalMode] = useState<'create' | 'edit' | 'view' | null>(null);
+  const [selectedRecordId, setSelectedRecordId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 8;
 
@@ -79,24 +80,52 @@ export default function Records() {
 
   const totalPages = Math.ceil(total / limit);
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const openModal = (mode: 'create' | 'edit' | 'view', record?: Record) => {
+    setModalMode(mode);
+    if (record) {
+      setSelectedRecordId(record.id);
+      setNewRecord({
+        amount: record.amount.toString(),
+        type: record.type,
+        category: record.category,
+        date: record.date.split('T')[0],
+        notes: record.notes || '',
+      });
+    } else {
+      setSelectedRecordId(null);
+      setNewRecord({ amount: '', type: 'income', category: 'Salary', date: new Date().toISOString().split('T')[0], notes: '' });
+    }
+  };
+
+  const closeModal = () => {
+    setModalMode(null);
+    setSelectedRecordId(null);
+    setNewRecord({ amount: '', type: 'income', category: 'Salary', date: new Date().toISOString().split('T')[0], notes: '' });
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setCreating(true);
+    if (modalMode === 'view') return;
+    setSaving(true);
     try {
-      await api.post('/records', {
+      const payload = {
         amount: Number(newRecord.amount),
         type: newRecord.type,
         category: newRecord.category,
         date: newRecord.date,
         notes: newRecord.notes || null,
-      });
-      setShowCreateModal(false);
-      setNewRecord({ amount: '', type: 'income', category: 'Salary', date: new Date().toISOString().split('T')[0], notes: '' });
+      };
+      if (modalMode === 'edit' && selectedRecordId) {
+        await api.put(`/records/${selectedRecordId}`, payload);
+      } else {
+        await api.post('/records', payload);
+      }
+      closeModal();
       fetchRecords();
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || 'Failed to create record');
+      alert(err.response?.data?.detail || err.message || 'Failed to save record');
     } finally {
-      setCreating(false);
+      setSaving(false);
     }
   };
 
@@ -143,7 +172,7 @@ export default function Records() {
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => openModal('create')}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-purple-blue text-white font-medium text-sm shadow-lg hover:shadow-xl hover:shadow-accent-purple/20 transition-all duration-300"
           >
             <Plus className="w-4 h-4" />
@@ -268,6 +297,8 @@ export default function Records() {
           userRole={user?.role || 'viewer'}
           currentUserId={user?.id}
           onDelete={handleDelete}
+          onEdit={(r) => openModal('edit', r)}
+          onView={(r) => openModal('view', r)}
         />
       )}
 
@@ -315,15 +346,15 @@ export default function Records() {
         </div>
       )}
 
-      {/* Create Modal */}
+      {/* Create/Edit/View Modal */}
       <AnimatePresence>
-        {showCreateModal && (
+        {modalMode && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowCreateModal(false)}
+            onClick={closeModal}
           >
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div
@@ -335,18 +366,20 @@ export default function Records() {
               className="relative w-full max-w-lg glass-card p-6"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-semibold text-white">New Record</h3>
+                <h3 className="text-lg font-semibold text-white">
+                  {modalMode === 'create' ? 'New Record' : modalMode === 'edit' ? 'Edit Record' : 'Record Details'}
+                </h3>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={closeModal}
                   className="p-1.5 rounded-lg hover:bg-white/5 text-navy-400 hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </motion.button>
               </div>
 
-              <form onSubmit={handleCreate} className="space-y-4">
+              <form onSubmit={handleSave} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-navy-300 mb-1.5">Amount</label>
@@ -357,8 +390,9 @@ export default function Records() {
                       required
                       min="0.01"
                       step="0.01"
+                      disabled={modalMode === 'view'}
                       placeholder="0.00"
-                      className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white placeholder:text-navy-500 focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all"
+                      className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white placeholder:text-navy-500 focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all disabled:opacity-50"
                     />
                   </div>
                   <div>
@@ -366,7 +400,8 @@ export default function Records() {
                     <select
                       value={newRecord.type}
                       onChange={(e) => setNewRecord((r) => ({ ...r, type: e.target.value as RecordType }))}
-                      className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 transition-all"
+                      disabled={modalMode === 'view'}
+                      className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 transition-all disabled:opacity-50"
                     >
                       <option value="income">Income</option>
                       <option value="expense">Expense</option>
@@ -380,7 +415,8 @@ export default function Records() {
                     <select
                       value={newRecord.category}
                       onChange={(e) => setNewRecord((r) => ({ ...r, category: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 transition-all"
+                      disabled={modalMode === 'view'}
+                      className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 transition-all disabled:opacity-50"
                     >
                       {CATEGORIES.map((c) => (
                         <option key={c} value={c}>{c}</option>
@@ -395,7 +431,8 @@ export default function Records() {
                         type="date"
                         value={newRecord.date}
                         onChange={(e) => setNewRecord((r) => ({ ...r, date: e.target.value }))}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 transition-all"
+                        disabled={modalMode === 'view'}
+                        className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 transition-all disabled:opacity-50"
                       />
                     </div>
                   </div>
@@ -407,8 +444,9 @@ export default function Records() {
                     type="text"
                     value={newRecord.notes}
                     onChange={(e) => setNewRecord((r) => ({ ...r, notes: e.target.value }))}
+                    disabled={modalMode === 'view'}
                     placeholder="e.g. Monthly salary payment"
-                    className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white placeholder:text-navy-500 focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white placeholder:text-navy-500 focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all disabled:opacity-50"
                   />
                 </div>
 
@@ -417,24 +455,28 @@ export default function Records() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="button"
-                    onClick={() => setShowCreateModal(false)}
+                    onClick={closeModal}
                     className="flex-1 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm font-medium text-navy-300 hover:text-white transition-all"
                   >
-                    Cancel
+                    {modalMode === 'view' ? 'Close' : 'Cancel'}
                   </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={creating}
-                    className="flex-1 py-2.5 rounded-xl gradient-purple-blue text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:shadow-accent-purple/20 transition-all disabled:opacity-50"
-                  >
-                    {creating ? (
-                      <div className="w-5 h-5 mx-auto border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    ) : (
-                      'Create Record'
-                    )}
-                  </motion.button>
+                  {modalMode !== 'view' && (
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={saving}
+                      className="flex-1 py-2.5 rounded-xl gradient-purple-blue text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:shadow-accent-purple/20 transition-all disabled:opacity-50"
+                    >
+                      {saving ? (
+                        <div className="w-5 h-5 mx-auto border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : modalMode === 'edit' ? (
+                        'Save Changes'
+                      ) : (
+                        'Create Record'
+                      )}
+                    </motion.button>
+                  )}
                 </div>
               </form>
             </motion.div>

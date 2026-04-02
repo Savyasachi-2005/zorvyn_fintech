@@ -202,35 +202,7 @@ export default function Login() {
             </motion.button>
           </motion.form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-px bg-white/[0.06]" />
-            <span className="text-xs text-navy-500 uppercase tracking-wider">Demo credentials</span>
-            <div className="flex-1 h-px bg-white/[0.06]" />
-          </div>
 
-          {/* Demo hints */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { role: 'Admin', email: 'admin@zorvyn.com' },
-              { role: 'Analyst', email: 'analyst@zorvyn.com' },
-              { role: 'Viewer', email: 'viewer@zorvyn.com' },
-            ].map((demo) => (
-              <motion.button
-                key={demo.role}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                type="button"
-                onClick={() => {
-                  setEmail(demo.email);
-                  setPassword('password123');
-                }}
-                className="py-2.5 rounded-xl bg-navy-800/30 border border-white/[0.06] text-xs font-medium text-navy-300 hover:text-white hover:border-accent-purple/30 transition-all duration-200"
-              >
-                {demo.role}
-              </motion.button>
-            ))}
-          </div>
         </div>
       </motion.div>
     </div>

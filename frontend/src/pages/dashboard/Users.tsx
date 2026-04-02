@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Shield, ShieldCheck, ShieldX, MoreHorizontal } from 'lucide-react';
+import { Search, Shield, ShieldCheck, ShieldX, MoreHorizontal, X, Lock, Mail, User as UserIcon } from 'lucide-react';
 import api from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 import type { User, UserRole, UserFromAPI } from '../../types';
 import { normalizeUser } from '../../types';
 
@@ -33,6 +34,27 @@ export default function Users() {
   const [search, setSearch] = useState('');
   const [editingRole, setEditingRole] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole('admin');
+
+  // Menu and Modals State
+  const [activeMenuUserId, setActiveMenuUserId] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [modalActionLoading, setModalActionLoading] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [resetForm, setResetForm] = useState({ password: '' });
+
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveMenuUserId(null);
+      setEditingRole(null);
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -80,6 +102,56 @@ export default function Users() {
     }
   };
 
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setEditForm({ name: user.name, email: user.email });
+    setIsEditModalOpen(true);
+    setActiveMenuUserId(null);
+  };
+
+  const openResetModal = (user: User) => {
+    setSelectedUser(user);
+    setResetForm({ password: '' });
+    setIsResetModalOpen(true);
+    setActiveMenuUserId(null);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    setModalActionLoading(true);
+    try {
+      const { data } = await api.put<UserFromAPI>(`/users/${selectedUser.id}`, {
+        full_name: editForm.name,
+        email: editForm.email,
+      });
+      const updated = normalizeUser(data);
+      setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? updated : u)));
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      alert(err.response?.data?.detail || err.message || 'Failed to update user');
+    } finally {
+      setModalActionLoading(false);
+    }
+  };
+
+  const handleResetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser) return;
+    setModalActionLoading(true);
+    try {
+      await api.put(`/users/${selectedUser.id}/password`, {
+        password: resetForm.password,
+      });
+      setIsResetModalOpen(false);
+      alert('Password reset successfully');
+    } catch (err: any) {
+      alert(err.response?.data?.detail || err.message || 'Failed to reset password');
+    } finally {
+      setModalActionLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -94,7 +166,7 @@ export default function Users() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-6 relative"
     >
       {/* Header */}
       <div>
@@ -184,6 +256,7 @@ export default function Users() {
                 {filteredUsers.map((user, index) => {
                   const colors = roleColors[user.role];
                   const RoleIcon = roleIcons[user.role];
+                  const isLastRows = filteredUsers.length > 2 && index >= filteredUsers.length - 2;
 
                   return (
                     <motion.tr
@@ -214,7 +287,10 @@ export default function Users() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => setEditingRole(editingRole === user.id ? null : user.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingRole(editingRole === user.id ? null : user.id);
+                          }}
                           className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium capitalize transition-all duration-200 ${colors.bg} ${colors.text} ${colors.border}`}
                         >
                           <RoleIcon className="w-3.5 h-3.5" />
@@ -225,11 +301,12 @@ export default function Users() {
                         <AnimatePresence>
                           {editingRole === user.id && (
                             <motion.div
-                              initial={{ opacity: 0, scale: 0.9, y: -5 }}
+                              onClick={(e) => e.stopPropagation()}
+                              initial={{ opacity: 0, scale: 0.9, y: isLastRows ? 5 : -5 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
-                              exit={{ opacity: 0, scale: 0.9, y: -5 }}
+                              exit={{ opacity: 0, scale: 0.9, y: isLastRows ? 5 : -5 }}
                               transition={{ duration: 0.15 }}
-                              className="absolute z-20 top-full left-5 mt-1 glass-card !rounded-lg p-1 min-w-[130px]"
+                              className={`absolute z-20 ${isLastRows ? 'bottom-full mb-1 top-auto' : 'top-full mt-1'} left-5 glass-card !rounded-lg p-1 min-w-[130px]`}
                             >
                               {ROLES.map((role) => {
                                 const rc = roleColors[role];
@@ -286,14 +363,50 @@ export default function Users() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4">
-                        <motion.button
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="p-1.5 rounded-lg hover:bg-white/5 text-navy-400 hover:text-white transition-colors"
-                        >
-                          <MoreHorizontal className="w-4 h-4" />
-                        </motion.button>
+                      <td className="px-5 py-4 relative">
+                        {isAdmin && (
+                          <>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuUserId(activeMenuUserId === user.id ? null : user.id);
+                              }}
+                              className="p-1.5 rounded-lg hover:bg-white/5 text-navy-400 hover:text-white transition-colors relative z-20"
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                            </motion.button>
+
+                            <AnimatePresence>
+                              {activeMenuUserId === user.id && (
+                                <motion.div
+                                  onClick={(e) => e.stopPropagation()}
+                                  initial={{ opacity: 0, scale: 0.95, y: isLastRows ? 10 : -10 }}
+                                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                                  exit={{ opacity: 0, scale: 0.95, y: isLastRows ? 10 : -10 }}
+                                  transition={{ duration: 0.15 }}
+                                  className={`absolute right-5 ${isLastRows ? 'bottom-full mb-1 top-auto' : 'top-full mt-1'} w-40 rounded-lg bg-[#0f172a] shadow-lg border border-white/[0.06] p-1 z-30`}
+                                >
+                                  <button
+                                    onClick={() => openEditModal(user)}
+                                    className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-navy-300 hover:bg-white/[0.05] hover:text-white transition-all duration-150 flex items-center gap-2"
+                                  >
+                                    <UserIcon className="w-3.5 h-3.5" />
+                                    Edit User
+                                  </button>
+                                  <button
+                                    onClick={() => openResetModal(user)}
+                                    className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-accent-rose hover:bg-accent-rose/10 transition-all duration-150 flex items-center gap-2 mt-1"
+                                  >
+                                    <Lock className="w-3.5 h-3.5" />
+                                    Reset Password
+                                  </button>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </>
+                        )}
                       </td>
                     </motion.tr>
                   );
@@ -309,6 +422,162 @@ export default function Users() {
           </div>
         )}
       </div>
+
+      {/* Edit User Modal */}
+      <AnimatePresence>
+        {isEditModalOpen && selectedUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-md glass-card p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-white">Edit User</h3>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-white/5 text-navy-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </motion.button>
+              </div>
+
+              <form onSubmit={handleEditSubmit} className="space-y-4">
+                <div>
+                   <label className="block text-sm font-medium text-navy-300 mb-1.5">Full Name</label>
+                   <div className="relative">
+                      <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" />
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        required
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all font-medium"
+                      />
+                   </div>
+                </div>
+                <div>
+                   <label className="block text-sm font-medium text-navy-300 mb-1.5">Email</label>
+                   <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" />
+                      <input
+                        type="email"
+                        value={editForm.email}
+                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                        required
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all font-medium"
+                      />
+                   </div>
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm font-medium text-navy-300 hover:text-white transition-all"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={modalActionLoading}
+                    className="flex-1 py-2.5 rounded-xl gradient-purple-blue text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:shadow-accent-purple/20 transition-all disabled:opacity-50"
+                  >
+                    {modalActionLoading ? (
+                       <div className="w-5 h-5 mx-auto border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : 'Save Changes'}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reset Password Modal */}
+      <AnimatePresence>
+        {isResetModalOpen && selectedUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="relative w-full max-w-md glass-card p-6"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-semibold text-white">Reset Password</h3>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setIsResetModalOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-white/5 text-navy-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </motion.button>
+              </div>
+
+              <form onSubmit={handleResetSubmit} className="space-y-4">
+                <div>
+                   <label className="block text-sm font-medium text-navy-300 mb-1.5">New Password</label>
+                   <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" />
+                      <input
+                        type="password"
+                        value={resetForm.password}
+                        onChange={(e) => setResetForm({ password: e.target.value })}
+                        required
+                        minLength={8}
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all font-medium"
+                      />
+                   </div>
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="button"
+                    onClick={() => setIsResetModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm font-medium text-navy-300 hover:text-white transition-all"
+                  >
+                    Cancel
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    disabled={modalActionLoading}
+                    className="flex-1 py-2.5 rounded-xl bg-accent-rose text-sm font-semibold text-white shadow-lg hover:shadow-xl hover:shadow-accent-rose/20 transition-all disabled:opacity-50"
+                  >
+                    {modalActionLoading ? (
+                       <div className="w-5 h-5 mx-auto border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : 'Reset Password'}
+                  </motion.button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

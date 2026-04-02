@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from core.security import create_access_token, hash_password, verify_password
 from models.user import User, UserRole
-from schemas.user import UserRegister
+from schemas.user import UserRegister, UserUpdate
 
 
 def register_user(db: Session, payload: UserRegister) -> User:
@@ -68,3 +68,34 @@ def update_user_status(db: Session, user_id: int, is_active: bool) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+
+def update_user_details(db: Session, user_id: int, payload: UserUpdate) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if payload.email and payload.email != user.email:
+        existing = db.query(User).filter(User.email == payload.email).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+        user.email = payload.email
+        
+    if payload.full_name:
+        user.full_name = payload.full_name
+        
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def reset_user_password(db: Session, user_id: int, new_password: str) -> User:
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    user.hashed_password = hash_password(new_password)
+    db.commit()
+    db.refresh(user)
+    return user
+

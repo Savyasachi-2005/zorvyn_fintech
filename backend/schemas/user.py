@@ -17,6 +17,15 @@ class UserLogin(BaseModel):
     password: str = Field(min_length=8, max_length=128)
 
 
+class UserUpdate(BaseModel):
+    email: EmailStr | None = None
+    full_name: str | None = Field(default=None, min_length=2, max_length=255)
+
+
+class UserPasswordReset(BaseModel):
+    password: str = Field(min_length=8, max_length=128)
+
+
 class UserPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

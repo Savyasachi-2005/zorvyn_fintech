@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, RefreshCw } from 'lucide-react';
+import { Calendar, RefreshCw, Users } from 'lucide-react';
 import SummaryCards from '../../components/dashboard/SummaryCards';
 import Charts from '../../components/dashboard/Charts';
 import RecordTable from '../../components/dashboard/RecordTable';
@@ -127,6 +127,36 @@ export default function Dashboard() {
 
       {/* Summary Cards */}
       <SummaryCards data={summary} loading={loading} />
+
+      {/* Admin Specific Overview */}
+      {user?.role === 'admin' && summary.totalUsers !== undefined && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="grid grid-cols-1 sm:grid-cols-3 gap-6"
+        >
+          <div className="glass-card p-6 flex flex-col justify-center">
+            <h3 className="text-sm font-medium text-navy-400">Total Users</h3>
+            <p className="text-3xl font-bold text-white mt-2">{summary.totalUsers}</p>
+          </div>
+          <div className="glass-card p-6 flex flex-col justify-center">
+            <h3 className="text-sm font-medium text-navy-400">Active Users</h3>
+            <p className="text-3xl font-bold text-accent-emerald mt-2">{summary.activeUsers}</p>
+          </div>
+          <div className="glass-card p-6 flex flex-col items-center justify-center border border-accent-purple/20">
+            <motion.a
+              href="/dashboard/users"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full flex justify-center items-center gap-2 px-4 py-3 rounded-xl gradient-purple-blue text-white font-medium shadow-lg hover:shadow-xl hover:shadow-accent-purple/20 transition-all duration-300"
+            >
+              <Users className="w-5 h-5" />
+              Manage Users
+            </motion.a>
+          </div>
+        </motion.div>
+      )}
 
       {/* Charts — only for analyst/admin */}
       {canViewAnalytics && trends.length > 0 && (

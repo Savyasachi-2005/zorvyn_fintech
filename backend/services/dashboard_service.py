@@ -26,11 +26,17 @@ def get_summary(db: Session, current_user: User) -> dict:
         .scalar()
     )
 
-    return {
+    result = {
         "total_income": float(income),
         "total_expense": float(expense),
         "balance": float(income - expense),
     }
+
+    if current_user.role == UserRole.ADMIN:
+        result["total_users"] = db.query(User).count()
+        result["active_users"] = db.query(User).filter(User.is_active == True).count()
+
+    return result
 
 
 def get_category_breakdown(db: Session, current_user: User) -> list[dict]:

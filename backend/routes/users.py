@@ -4,8 +4,14 @@ from sqlalchemy.orm import Session
 from db.session import get_db
 from dependencies.role_checker import RoleChecker
 from models.user import UserRole
-from schemas.user import UserPublic, UserRoleUpdate, UserStatusUpdate
-from services.user_service import list_users, update_user_role, update_user_status
+from schemas.user import UserPublic, UserRoleUpdate, UserStatusUpdate, UserUpdate, UserPasswordReset
+from services.user_service import (
+    list_users,
+    update_user_role,
+    update_user_status,
+    update_user_details,
+    reset_user_password,
+)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 admin_only = RoleChecker([UserRole.ADMIN])
@@ -32,3 +38,22 @@ def set_user_status(
     db: Session = Depends(get_db),
 ):
     return update_user_status(db, user_id, payload.is_active)
+
+
+@router.put("/{user_id}", response_model=UserPublic, dependencies=[Depends(admin_only)])
+def update_user(
+    user_id: int,
+    payload: UserUpdate,
+    db: Session = Depends(get_db),
+):
+    return update_user_details(db, user_id, payload)
+
+
+@router.put("/{user_id}/password", response_model=UserPublic, dependencies=[Depends(admin_only)])
+def reset_password(
+    user_id: int,
+    payload: UserPasswordReset,
+    db: Session = Depends(get_db),
+):
+    return reset_user_password(db, user_id, payload.password)
+

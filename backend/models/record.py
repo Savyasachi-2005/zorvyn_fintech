@@ -32,3 +32,7 @@ class Record(Base):
     )
 
     owner = relationship("User", back_populates="records", lazy="joined")
+
+    @property
+    def user_name(self) -> str | None:
+        return self.owner.full_name if self.owner else None
