@@ -21,5 +21,10 @@ class Settings:
         os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60")
     )
 
+    @property
+    def get_db_url(self) -> str:
+        if self.database_url and self.database_url.startswith("postgres://"):
+            return self.database_url.replace("postgres://", "postgresql://", 1)
+        return self.database_url
 
 settings = Settings()
