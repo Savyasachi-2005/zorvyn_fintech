@@ -190,20 +190,10 @@ npm run dev
 
 ---
 
-## ⚠️ Known Limitations
-
-- No real-time updates (WebSockets not implemented)
-- Basic error handling (no structured error codes beyond HTTP status)
-- No email-based password reset
-- No audit log for admin actions
-
----
-
 ## 🚀 Future Improvements
 
 - WebSocket support for real-time balance updates
 - Advanced analytics (forecasting, budget tracking)
-- Audit logs for all admin operations
 - Email reset system
 - Unit and integration tests
 
