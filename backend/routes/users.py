@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from db.session import get_db
+from dependencies.auth import get_current_user
 from dependencies.role_checker import RoleChecker
-from models.user import UserRole
+from models.user import User, UserRole
 from schemas.user import UserPublic, UserRoleUpdate, UserStatusUpdate, UserUpdate, UserPasswordReset
 from services.user_service import (
     list_users,
@@ -27,8 +28,9 @@ def set_user_role(
     user_id: int,
     payload: UserRoleUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return update_user_role(db, user_id, payload.role)
+    return update_user_role(db, user_id, payload.role, performed_by=current_user.id)
 
 
 @router.put("/{user_id}/status", response_model=UserPublic, dependencies=[Depends(admin_only)])
@@ -36,8 +38,9 @@ def set_user_status(
     user_id: int,
     payload: UserStatusUpdate,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return update_user_status(db, user_id, payload.is_active)
+    return update_user_status(db, user_id, payload.is_active, performed_by=current_user.id)
 
 
 @router.put("/{user_id}", response_model=UserPublic, dependencies=[Depends(admin_only)])
@@ -56,4 +59,3 @@ def reset_password(
     db: Session = Depends(get_db),
 ):
     return reset_user_password(db, user_id, payload.password)
-

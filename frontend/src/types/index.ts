@@ -201,3 +201,39 @@ export interface JWTPayload {
   role: UserRole;
   exp: number;
 }
+
+// Audit log from backend
+export interface AuditLogFromAPI {
+  id: number;
+  action: string;
+  performed_by: number;
+  performed_by_name: string | null;
+  target_user: number | null;
+  target_user_name: string | null;
+  record_id: number | null;
+  timestamp: string;
+}
+
+export interface AuditLog {
+  id: number;
+  action: string;
+  performedBy: number;
+  performedByName: string;
+  targetUser: number | null;
+  targetUserName: string | null;
+  recordId: number | null;
+  timestamp: string;
+}
+
+export function normalizeAuditLog(raw: AuditLogFromAPI): AuditLog {
+  return {
+    id: raw.id,
+    action: raw.action,
+    performedBy: raw.performed_by,
+    performedByName: raw.performed_by_name || 'Unknown',
+    targetUser: raw.target_user,
+    targetUserName: raw.target_user_name,
+    recordId: raw.record_id,
+    timestamp: raw.timestamp,
+  };
+}

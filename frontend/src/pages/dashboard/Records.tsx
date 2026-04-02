@@ -9,6 +9,7 @@ import {
   X,
   Calendar,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import RecordTable from '../../components/dashboard/RecordTable';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../lib/api';
@@ -107,6 +108,8 @@ export default function Records() {
     e.preventDefault();
     if (modalMode === 'view') return;
     setSaving(true);
+    const isEdit = modalMode === 'edit' && selectedRecordId;
+    const toastId = toast.loading(isEdit ? 'Saving changes...' : 'Creating record...');
     try {
       const payload = {
         amount: Number(newRecord.amount),
@@ -115,26 +118,29 @@ export default function Records() {
         date: newRecord.date,
         notes: newRecord.notes || null,
       };
-      if (modalMode === 'edit' && selectedRecordId) {
+      if (isEdit) {
         await api.put(`/records/${selectedRecordId}`, payload);
       } else {
         await api.post('/records', payload);
       }
+      toast.success(isEdit ? 'Record updated' : 'Record created', { id: toastId });
       closeModal();
       fetchRecords();
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || 'Failed to save record');
+      toast.error(err.message || 'Failed to save record', { id: toastId });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: number) => {
+    const toastId = toast.loading('Deleting record...');
     try {
       await api.delete(`/records/${id}`);
+      toast.success('Record deleted', { id: toastId });
       fetchRecords();
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || 'Failed to delete record');
+      toast.error(err.message || 'Failed to delete record', { id: toastId });
     }
   };
 

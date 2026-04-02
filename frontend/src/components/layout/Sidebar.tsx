@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  ScrollText,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -18,6 +19,7 @@ const navItems = [
   { to: '/dashboard/records', icon: FileText, label: 'Records', roles: ['viewer', 'analyst', 'admin'] },
   { to: '/dashboard/analytics', icon: BarChart3, label: 'Analytics', roles: ['analyst', 'admin'] },
   { to: '/dashboard/users', icon: Users, label: 'Users', roles: ['admin'] },
+  { to: '/dashboard/logs', icon: ScrollText, label: 'Audit Logs', roles: ['admin'] },
 ];
 
 export default function Sidebar() {

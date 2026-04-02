@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Shield, ShieldCheck, ShieldX, MoreHorizontal, X, Lock, Mail, User as UserIcon } from 'lucide-react';
+import toast from 'react-hot-toast';
 import api from '../../lib/api';
 import { useAuth } from '../../hooks/useAuth';
 import type { User, UserRole, UserFromAPI } from '../../types';
@@ -44,7 +45,7 @@ export default function Users() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [modalActionLoading, setModalActionLoading] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [editForm, setEditForm] = useState<{ name: string; email: string; role: UserRole }>({ name: '', email: '', role: 'viewer' });
   const [resetForm, setResetForm] = useState({ password: '' });
 
   useEffect(() => {
@@ -78,12 +79,14 @@ export default function Users() {
   );
 
   const handleRoleChange = async (userId: number, newRole: UserRole) => {
+    const toastId = toast.loading('Updating role...');
     try {
       const { data } = await api.put<UserFromAPI>(`/users/${userId}/role`, { role: newRole });
       const updated = normalizeUser(data);
       setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+      toast.success(`Role updated to ${newRole}`, { id: toastId });
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || 'Failed to update role');
+      toast.error(err.message || 'Failed to update role', { id: toastId });
     }
     setEditingRole(null);
   };
@@ -91,20 +94,23 @@ export default function Users() {
   const handleToggleActive = async (userId: number) => {
     const user = users.find((u) => u.id === userId);
     if (!user) return;
+    const newStatus = !user.isActive;
+    const toastId = toast.loading(newStatus ? 'Activating user...' : 'Deactivating user...');
     try {
       const { data } = await api.put<UserFromAPI>(`/users/${userId}/status`, {
-        is_active: !user.isActive,
+        is_active: newStatus,
       });
       const updated = normalizeUser(data);
       setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)));
+      toast.success(newStatus ? 'User activated' : 'User deactivated', { id: toastId });
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || 'Failed to update status');
+      toast.error(err.message || 'Failed to update status', { id: toastId });
     }
   };
 
   const openEditModal = (user: User) => {
     setSelectedUser(user);
-    setEditForm({ name: user.name, email: user.email });
+    setEditForm({ name: user.name, email: user.email, role: user.role });
     setIsEditModalOpen(true);
     setActiveMenuUserId(null);
   };
@@ -120,16 +126,24 @@ export default function Users() {
     e.preventDefault();
     if (!selectedUser) return;
     setModalActionLoading(true);
+    const toastId = toast.loading('Saving changes...');
     try {
+      let finalUser = null;
+      if (editForm.role !== selectedUser.role) {
+        const { data: roleData } = await api.put<UserFromAPI>(`/users/${selectedUser.id}/role`, { role: editForm.role });
+        finalUser = roleData;
+      }
       const { data } = await api.put<UserFromAPI>(`/users/${selectedUser.id}`, {
         full_name: editForm.name,
         email: editForm.email,
       });
-      const updated = normalizeUser(data);
+      finalUser = data;
+      const updated = normalizeUser(finalUser);
       setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? updated : u)));
       setIsEditModalOpen(false);
+      toast.success('User updated', { id: toastId });
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || 'Failed to update user');
+      toast.error(err.message || 'Failed to update user', { id: toastId });
     } finally {
       setModalActionLoading(false);
     }
@@ -139,14 +153,15 @@ export default function Users() {
     e.preventDefault();
     if (!selectedUser) return;
     setModalActionLoading(true);
+    const toastId = toast.loading('Resetting password...');
     try {
       await api.put(`/users/${selectedUser.id}/password`, {
         password: resetForm.password,
       });
       setIsResetModalOpen(false);
-      alert('Password reset successfully');
+      toast.success('Password reset successfully', { id: toastId });
     } catch (err: any) {
-      alert(err.response?.data?.detail || err.message || 'Failed to reset password');
+      toast.error(err.message || 'Failed to reset password', { id: toastId });
     } finally {
       setModalActionLoading(false);
     }
@@ -396,6 +411,16 @@ export default function Users() {
                                     Edit User
                                   </button>
                                   <button
+                                    onClick={() => {
+                                      setEditingRole(user.id);
+                                      setActiveMenuUserId(null);
+                                    }}
+                                    className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-navy-300 hover:bg-white/[0.05] hover:text-white transition-all duration-150 flex items-center gap-2 mt-1"
+                                  >
+                                    <Shield className="w-3.5 h-3.5" />
+                                    Change Role
+                                  </button>
+                                  <button
                                     onClick={() => openResetModal(user)}
                                     className="w-full text-left px-3 py-2 rounded-md text-xs font-medium text-accent-rose hover:bg-accent-rose/10 transition-all duration-150 flex items-center gap-2 mt-1"
                                   >
@@ -476,6 +501,22 @@ export default function Users() {
                         required
                         className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all font-medium"
                       />
+                   </div>
+                </div>
+                <div>
+                   <label className="block text-sm font-medium text-navy-300 mb-1.5">Role</label>
+                   <div className="relative">
+                      <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" />
+                      <select
+                        value={editForm.role}
+                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value as UserRole })}
+                        required
+                        className="w-full pl-11 pr-4 py-2.5 rounded-xl bg-navy-800/50 border border-white/[0.06] text-sm text-white focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/20 transition-all font-medium appearance-none"
+                      >
+                        {ROLES.map(r => (
+                           <option key={r} value={r} className="bg-navy-800 text-white capitalize">{r}</option>
+                        ))}
+                      </select>
                    </div>
                 </div>
                 

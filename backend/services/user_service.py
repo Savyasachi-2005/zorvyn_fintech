@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from core.security import create_access_token, hash_password, verify_password
 from models.user import User, UserRole
 from schemas.user import UserRegister, UserUpdate
+from services.audit_service import log_action
 
 
 def register_user(db: Session, payload: UserRegister) -> User:
@@ -48,18 +49,26 @@ def list_users(db: Session) -> list[User]:
     return db.query(User).order_by(User.id.asc()).all()
 
 
-def update_user_role(db: Session, user_id: int, role: UserRole) -> User:
+def update_user_role(db: Session, user_id: int, role: UserRole, *, performed_by: int) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
+    old_role = user.role.value
     user.role = role
     db.commit()
     db.refresh(user)
+
+    log_action(
+        db,
+        action=f"Changed role from '{old_role}' to '{role.value}'",
+        performed_by=performed_by,
+        target_user=user_id,
+    )
     return user
 
 
-def update_user_status(db: Session, user_id: int, is_active: bool) -> User:
+def update_user_status(db: Session, user_id: int, is_active: bool, *, performed_by: int) -> User:
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -67,6 +76,14 @@ def update_user_status(db: Session, user_id: int, is_active: bool) -> User:
     user.is_active = is_active
     db.commit()
     db.refresh(user)
+
+    status_label = "activated" if is_active else "deactivated"
+    log_action(
+        db,
+        action=f"User {status_label}",
+        performed_by=performed_by,
+        target_user=user_id,
+    )
     return user
 
 
@@ -98,4 +115,3 @@ def reset_user_password(db: Session, user_id: int, new_password: str) -> User:
     db.commit()
     db.refresh(user)
     return user
-

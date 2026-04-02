@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from core.config import settings
 from db.base import Base
 from db.session import engine
+from routes.admin import router as admin_router
 from routes.auth import router as auth_router
 from routes.dashboard import router as dashboard_router
 from routes.records import router as records_router
@@ -34,3 +35,4 @@ app.include_router(auth_router, prefix=settings.api_prefix)
 app.include_router(records_router, prefix=settings.api_prefix)
 app.include_router(users_router, prefix=settings.api_prefix)
 app.include_router(dashboard_router, prefix=settings.api_prefix)
+app.include_router(admin_router, prefix=settings.api_prefix)

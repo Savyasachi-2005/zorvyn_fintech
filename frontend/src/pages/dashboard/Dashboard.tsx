@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, RefreshCw, Users } from 'lucide-react';
+import toast from 'react-hot-toast';
 import SummaryCards from '../../components/dashboard/SummaryCards';
 import Charts from '../../components/dashboard/Charts';
 import RecordTable from '../../components/dashboard/RecordTable';
@@ -70,8 +71,9 @@ export default function Dashboard() {
           recordCount: allRes.data.total,
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load dashboard:', err);
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }

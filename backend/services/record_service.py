@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from models.record import Record, RecordType
 from models.user import User, UserRole
 from schemas.record import RecordCreate, RecordUpdate
+from services.audit_service import log_action
 
 
 def create_record(db: Session, current_user: User, payload: RecordCreate) -> Record:
@@ -21,6 +22,13 @@ def create_record(db: Session, current_user: User, payload: RecordCreate) -> Rec
     db.add(record)
     db.commit()
     db.refresh(record)
+
+    log_action(
+        db,
+        action=f"Created {payload.type.value} record — {payload.category} (${payload.amount})",
+        performed_by=current_user.id,
+        record_id=record.id,
+    )
     return record
 
 
@@ -96,6 +104,13 @@ def update_record(
 
     db.commit()
     db.refresh(record)
+
+    log_action(
+        db,
+        action=f"Updated record #{record_id}",
+        performed_by=current_user.id,
+        record_id=record_id,
+    )
     return record
 
 
@@ -107,3 +122,10 @@ def soft_delete_record(db: Session, current_user: User, record_id: int) -> None:
 
     record.is_deleted = True
     db.commit()
+
+    log_action(
+        db,
+        action=f"Deleted record #{record_id}",
+        performed_by=current_user.id,
+        record_id=record_id,
+    )

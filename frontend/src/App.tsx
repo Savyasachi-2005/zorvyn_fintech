@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { Toaster } from 'react-hot-toast';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -7,6 +8,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Records from './pages/dashboard/Records';
 import Analytics from './pages/dashboard/Analytics';
 import Users from './pages/dashboard/Users';
+import AuditLogs from './pages/dashboard/AuditLogs';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Sidebar from './components/layout/Sidebar';
 import Navbar from './components/layout/Navbar';
@@ -45,6 +47,31 @@ function DashboardLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      {/* Global toast notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: {
+            background: '#151d35',
+            color: '#e2e8f0',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            borderRadius: '0.75rem',
+            fontSize: '0.875rem',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+          },
+          success: {
+            iconTheme: { primary: '#10b981', secondary: '#151d35' },
+          },
+          error: {
+            iconTheme: { primary: '#f43f5e', secondary: '#151d35' },
+          },
+          loading: {
+            iconTheme: { primary: '#8b5cf6', secondary: '#151d35' },
+          },
+        }}
+      />
+
       <Routes>
         {/* Public routes */}
         <Route
@@ -108,6 +135,14 @@ export default function App() {
               element={
                 <PageTransition>
                   <Users />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/dashboard/logs"
+              element={
+                <PageTransition>
+                  <AuditLogs />
                 </PageTransition>
               }
             />

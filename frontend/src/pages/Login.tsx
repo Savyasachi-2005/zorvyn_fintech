@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Zap, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
@@ -19,9 +20,12 @@ export default function Login() {
     setLoading(true);
     try {
       await login({ email, password });
+      toast.success('Welcome back!');
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Invalid credentials');
+      const message = err.response?.data?.detail || err.message || 'Invalid credentials';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

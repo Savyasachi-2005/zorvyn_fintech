@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, Zap, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Register() {
@@ -32,9 +33,12 @@ export default function Register() {
     setLoading(true);
     try {
       await register({ full_name: name, email, password });
+      toast.success('Account created successfully!');
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.response?.data?.detail || err.message || 'Registration failed');
+      const message = err.response?.data?.detail || err.message || 'Registration failed';
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
