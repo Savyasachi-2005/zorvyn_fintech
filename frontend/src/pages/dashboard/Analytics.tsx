@@ -20,7 +20,7 @@ import {
 import {
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  IndianRupee,
   Target,
   ArrowUpRight,
   ArrowDownRight,
@@ -42,7 +42,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <p className="text-sm font-medium text-white mb-2">{label}</p>
       {payload.map((entry: any, index: number) => (
         <p key={index} className="text-xs" style={{ color: entry.color }}>
-          {entry.name}: ${entry.value.toLocaleString()}
+          {entry.name}: ₹{entry.value.toLocaleString()}
         </p>
       ))}
     </div>
@@ -108,7 +108,7 @@ export default function Analytics() {
   const statCards = [
     {
       label: 'Total Income',
-      value: `$${summary.totalIncome.toLocaleString()}`,
+      value: `₹${summary.totalIncome.toLocaleString()}`,
       change: trends.length > 1
         ? `${trends[trends.length - 1]?.income > trends[trends.length - 2]?.income ? '+' : ''}${(
             ((trends[trends.length - 1]?.income - trends[trends.length - 2]?.income) / (trends[trends.length - 2]?.income || 1)) * 100
@@ -120,7 +120,7 @@ export default function Analytics() {
     },
     {
       label: 'Total Expense',
-      value: `$${summary.totalExpense.toLocaleString()}`,
+      value: `₹${summary.totalExpense.toLocaleString()}`,
       change: trends.length > 1
         ? `${trends[trends.length - 1]?.expense > trends[trends.length - 2]?.expense ? '+' : ''}${(
             ((trends[trends.length - 1]?.expense - trends[trends.length - 2]?.expense) / (trends[trends.length - 2]?.expense || 1)) * 100
@@ -133,14 +133,14 @@ export default function Analytics() {
     {
       label: 'Savings Rate',
       value: `${savingsRate}%`,
-      change: `Avg $${avgMonthlyIncome.toLocaleString()}/mo`,
+      change: `Avg ₹${avgMonthlyIncome.toLocaleString()}/mo`,
       positive: Number(savingsRate) > 0,
-      icon: DollarSign,
+      icon: IndianRupee,
       gradient: 'gradient-purple-blue',
     },
     {
       label: 'Net Balance',
-      value: `$${summary.balance.toLocaleString()}`,
+      value: `₹${summary.balance.toLocaleString()}`,
       change: summary.balance >= 0 ? 'Positive' : 'Negative',
       positive: summary.balance >= 0,
       icon: Target,
@@ -236,7 +236,7 @@ export default function Analytics() {
             <BarChart data={trends} barGap={4}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
               <XAxis dataKey="month" stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} />
-              <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v / 1000}k`} />
+              <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="income" fill="#10b981" radius={[6, 6, 0, 0]} name="Income" />
               <Bar dataKey="expense" fill="#f43f5e" radius={[6, 6, 0, 0]} name="Expense" />
@@ -260,7 +260,7 @@ export default function Analytics() {
               <LineChart data={savingsData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                 <XAxis dataKey="month" stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} />
-                <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v / 1000}k`} />
+                <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
                 <Tooltip content={<CustomTooltip />} />
                 <Line
                   type="monotone"
@@ -332,7 +332,7 @@ export default function Analytics() {
                   />
                 </div>
                 <div className="w-20 text-right text-sm font-medium text-white">
-                  ${cat.amount.toLocaleString()}
+                  ₹{cat.amount.toLocaleString()}
                 </div>
                 <div className="w-12 text-right text-xs text-navy-400">{cat.percentage}%</div>
               </motion.div>

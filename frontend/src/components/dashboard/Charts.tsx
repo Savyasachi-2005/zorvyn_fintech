@@ -28,7 +28,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <p className="text-sm font-medium text-white mb-2">{label}</p>
       {payload.map((entry: any, index: number) => (
         <p key={index} className="text-xs" style={{ color: entry.color }}>
-          {entry.name}: ${entry.value.toLocaleString()}
+          {entry.name}: ₹{entry.value.toLocaleString()}
         </p>
       ))}
     </div>
@@ -72,7 +72,7 @@ export default function Charts({ monthlyTrends, categoryBreakdown }: ChartsProps
               tick={{ fill: '#8899bb', fontSize: 12 }}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(v) => `$${v / 1000}k`}
+              tickFormatter={(v) => `₹${v / 1000}k`}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area
@@ -137,7 +137,7 @@ export default function Charts({ monthlyTrends, categoryBreakdown }: ChartsProps
                   <div className="glass-card p-3 !rounded-lg">
                     <p className="text-sm font-medium text-white">{d.category}</p>
                     <p className="text-xs text-navy-300">
-                      ${d.amount.toLocaleString()} ({d.percentage}%)
+                      ₹{d.amount.toLocaleString()} ({d.percentage}%)
                     </p>
                   </div>
                 );

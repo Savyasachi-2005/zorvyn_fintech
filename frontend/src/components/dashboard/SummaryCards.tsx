@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { TrendingUp, TrendingDown, DollarSign, FileText } from 'lucide-react';
+import { TrendingUp, TrendingDown, IndianRupee, FileText } from 'lucide-react';
 import type { SummaryData } from '../../types';
 
 interface SummaryCardsProps {
@@ -27,7 +27,7 @@ const cards = [
   {
     key: 'balance',
     label: 'Net Balance',
-    icon: DollarSign,
+    icon: IndianRupee,
     gradient: 'gradient-purple-blue',
     textColor: 'text-accent-purple',
     getValue: (d: SummaryData) => d.balance,
@@ -62,9 +62,9 @@ const cardVariants = {
 };
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
