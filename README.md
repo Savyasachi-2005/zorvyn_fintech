@@ -181,19 +181,18 @@ npm run dev
 
 ## 🧠 Design Decisions & Assumptions
 
-- **Clean architecture** — routes handle HTTP concerns only; all business logic is in the service layer; models are pure data definitions.
-- **RBAC enforced at backend** — role checks are applied via dependency injection on each endpoint, not just on the frontend.
-- **Soft delete** — records are marked inactive rather than permanently removed, preserving audit trails.
-- **Centralized API client** — Axios instance with interceptors handles token injection and 401 redirects.
-- **Assumption on Viewer role** — Viewers can create and manage their own records (personal finance use case), while Analysts have read-only access to all records for reporting purposes.
-- **Supabase as managed PostgreSQL** — chosen for ease of setup without sacrificing relational data integrity.
+- **Clean architecture** - routes handle HTTP concerns only; all business logic is in the service layer; models are pure data definitions.
+- **RBAC enforced at backend** - role checks are applied via dependency injection on each endpoint, not just on the frontend.
+- **Soft delete** - records are marked inactive rather than permanently removed, preserving audit trails.
+- **Centralized API client** - Axios instance with interceptors handles token injection and 401 redirects.
+- **Assumption on Viewer role** - Viewers can create and manage their own records (personal finance use case), while Analysts have read-only access to all records for reporting purposes.
+- **Supabase as managed PostgreSQL** - chosen for ease of setup without sacrificing relational data integrity.
 
 ---
 
 ## 🚀 Future Improvements
 
 - WebSocket support for real-time balance updates
-- Advanced analytics (forecasting, budget tracking)
 - Email reset system
 - Unit and integration tests
 
