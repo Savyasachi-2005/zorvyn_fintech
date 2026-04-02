@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date as date_type, datetime
 from decimal import Decimal
 from typing import Optional
 
@@ -11,7 +11,7 @@ class RecordBase(BaseModel):
     amount: Decimal = Field(gt=0)
     type: RecordType
     category: str = Field(min_length=1, max_length=100)
-    date: date
+    date: date_type
     notes: Optional[str] = Field(default=None, max_length=2000)
 
 
@@ -23,7 +23,7 @@ class RecordUpdate(BaseModel):
     amount: Optional[Decimal] = Field(default=None, gt=0)
     type: Optional[RecordType] = None
     category: Optional[str] = Field(default=None, min_length=1, max_length=100)
-    date: Optional[date] = None
+    date: Optional[date_type] = None
     notes: Optional[str] = Field(default=None, max_length=2000)
 
 

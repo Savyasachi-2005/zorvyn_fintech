@@ -250,9 +250,111 @@ export default function Users() {
         />
       </div>
 
+      {/* Users Cards (mobile) */}
+      <div className="md:hidden space-y-3">
+        {filteredUsers.map((user) => {
+          const colors = roleColors[user.role];
+          const RoleIcon = roleIcons[user.role];
+
+          return (
+            <div key={user.id} className="glass-card p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg gradient-purple-blue flex items-center justify-center text-xs font-bold text-white uppercase flex-shrink-0">
+                    {user.name.charAt(0) || user.email.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{user.name || 'Unnamed'}</p>
+                    <p className="text-xs text-navy-400 truncate">{user.email}</p>
+                  </div>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleToggleActive(user.id)}
+                  className="relative"
+                >
+                  <div
+                    className={`w-11 h-6 rounded-full transition-colors duration-300 ${
+                      user.isActive ? 'bg-accent-emerald/20' : 'bg-navy-700'
+                    }`}
+                  >
+                    <motion.div
+                      animate={{ x: user.isActive ? 20 : 2 }}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                      className={`absolute top-1 w-4 h-4 rounded-full transition-colors duration-300 ${
+                        user.isActive ? 'bg-accent-emerald' : 'bg-navy-500'
+                      }`}
+                    />
+                  </div>
+                </motion.button>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setEditingRole(editingRole === user.id ? null : user.id)}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium capitalize transition-all duration-200 ${colors.bg} ${colors.text} ${colors.border}`}
+                >
+                  <RoleIcon className="w-3.5 h-3.5" />
+                  {user.role}
+                </motion.button>
+                <span className="text-xs text-navy-400">
+                  Joined {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              </div>
+
+              <AnimatePresence>
+                {editingRole === user.id && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    className="grid grid-cols-3 gap-2"
+                  >
+                    {ROLES.map((role) => {
+                      const rc = roleColors[role];
+                      return (
+                        <button
+                          key={role}
+                          onClick={() => handleRoleChange(user.id, role)}
+                          className={`px-2 py-1.5 rounded-md text-xs font-medium capitalize transition-all ${
+                            user.role === role ? `${rc.bg} ${rc.text}` : 'text-navy-300 bg-white/[0.03]'
+                          }`}
+                        >
+                          {role}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {isAdmin && (
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    onClick={() => openEditModal(user)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent-purple/10 text-accent-purple text-xs font-medium"
+                  >
+                    <UserIcon className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => openResetModal(user)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent-rose/10 text-accent-rose text-xs font-medium"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    Reset
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
       {/* Users Table */}
       <div className="glass-card overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.06]">
@@ -462,7 +564,7 @@ export default function Users() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md glass-card p-6"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto glass-card p-4 sm:p-6"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-white">Edit User</h3>
@@ -562,7 +664,7 @@ export default function Users() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="relative w-full max-w-md glass-card p-6"
+              className="relative w-full max-w-md max-h-[90vh] overflow-y-auto glass-card p-4 sm:p-6"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-white">Reset Password</h3>

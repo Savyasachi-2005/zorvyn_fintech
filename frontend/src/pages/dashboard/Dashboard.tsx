@@ -110,7 +110,7 @@ export default function Dashboard() {
             Here's what's happening with your finances today.
           </motion.p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}

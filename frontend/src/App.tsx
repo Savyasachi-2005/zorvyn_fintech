@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
+import { useEffect, useState } from 'react';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -29,12 +30,36 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 
 // Dashboard layout with sidebar + navbar
 function DashboardLayout() {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopCollapsed, setDesktopCollapsed] = useState(false);
+
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth >= 1024) {
+        setMobileSidebarOpen(false);
+      }
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   return (
     <div className="min-h-screen flex">
-      <Sidebar />
-      <div className="flex-1 ml-[260px] transition-all duration-300">
-        <Navbar />
-        <main className="p-6">
+      <Sidebar
+        mobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
+        collapsed={desktopCollapsed}
+        onToggleCollapsed={() => setDesktopCollapsed((prev) => !prev)}
+      />
+      <div
+        className={`flex-1 transition-all duration-300 ${desktopCollapsed ? 'lg:ml-[80px]' : 'lg:ml-[260px]'}`}
+      >
+        <Navbar
+          onOpenMobileSidebar={() => setMobileSidebarOpen(true)}
+          collapsed={desktopCollapsed}
+          onToggleCollapsed={() => setDesktopCollapsed((prev) => !prev)}
+        />
+        <main className="p-4 sm:p-6">
           <AnimatePresence mode="wait">
             <Outlet />
           </AnimatePresence>

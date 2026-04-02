@@ -81,16 +81,51 @@ export default function Records() {
 
   const totalPages = Math.ceil(total / limit);
 
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error && typeof error === 'object') {
+      const err = error as { message?: unknown; response?: { data?: { detail?: unknown } } };
+      if (typeof err.message === 'string' && err.message.trim()) return err.message;
+
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string' && detail.trim()) return detail;
+      if (Array.isArray(detail)) {
+        const msg = detail
+          .map((item) => (item && typeof item === 'object' && 'msg' in item ? (item as { msg?: unknown }).msg : null))
+          .find((value): value is string => typeof value === 'string' && value.trim().length > 0);
+        if (msg) return msg;
+      }
+    }
+    return fallback;
+  };
+
+  const toDateInputValue = (value: unknown) => {
+    const today = new Date().toISOString().split('T')[0];
+    if (!value) return today;
+
+    if (typeof value === 'string') {
+      const isoPart = value.includes('T') ? value.split('T')[0] : value;
+      return /^\d{4}-\d{2}-\d{2}$/.test(isoPart) ? isoPart : today;
+    }
+
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return value.toISOString().split('T')[0];
+    }
+
+    return today;
+  };
+
   const openModal = (mode: 'create' | 'edit' | 'view', record?: Record) => {
     setModalMode(mode);
     if (record) {
+      const safeCategory = CATEGORIES.includes(record.category) ? record.category : 'Other';
+      const safeNotes = typeof record.notes === 'string' ? record.notes.slice(0, 2000) : '';
       setSelectedRecordId(record.id);
       setNewRecord({
-        amount: record.amount.toString(),
-        type: record.type,
-        category: record.category,
-        date: record.date.split('T')[0],
-        notes: record.notes || '',
+        amount: Number.isFinite(Number(record.amount)) ? String(record.amount) : '',
+        type: record.type === 'expense' ? 'expense' : 'income',
+        category: safeCategory,
+        date: toDateInputValue(record.date),
+        notes: safeNotes,
       });
     } else {
       setSelectedRecordId(null);
@@ -111,12 +146,26 @@ export default function Records() {
     const isEdit = modalMode === 'edit' && selectedRecordId;
     const toastId = toast.loading(isEdit ? 'Saving changes...' : 'Creating record...');
     try {
+      const amount = Number(newRecord.amount);
+      if (!Number.isFinite(amount) || amount <= 0) {
+        toast.error('Amount must be greater than 0', { id: toastId });
+        return;
+      }
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(newRecord.date)) {
+        toast.error('Please select a valid date', { id: toastId });
+        return;
+      }
+
+      const safeCategory = CATEGORIES.includes(newRecord.category) ? newRecord.category : 'Other';
+      const normalizedNotes = newRecord.notes.trim();
+
       const payload = {
-        amount: Number(newRecord.amount),
+        amount,
         type: newRecord.type,
-        category: newRecord.category,
+        category: safeCategory,
         date: newRecord.date,
-        notes: newRecord.notes || null,
+        notes: normalizedNotes ? normalizedNotes.slice(0, 2000) : null,
       };
       if (isEdit) {
         await api.put(`/records/${selectedRecordId}`, payload);
@@ -126,8 +175,8 @@ export default function Records() {
       toast.success(isEdit ? 'Record updated' : 'Record created', { id: toastId });
       closeModal();
       fetchRecords();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to save record', { id: toastId });
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Failed to save record'), { id: toastId });
     } finally {
       setSaving(false);
     }
@@ -139,8 +188,8 @@ export default function Records() {
       await api.delete(`/records/${id}`);
       toast.success('Record deleted', { id: toastId });
       fetchRecords();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete record', { id: toastId });
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err, 'Failed to delete record'), { id: toastId });
     }
   };
 
@@ -369,7 +418,7 @@ export default function Records() {
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 25 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg glass-card p-6"
+              className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto glass-card p-4 sm:p-6"
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-white">

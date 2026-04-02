@@ -101,7 +101,60 @@ export default function AuditLogs() {
         </div>
       ) : (
         <div className="glass-card overflow-hidden">
-          <div className="overflow-x-auto">
+          <div className="sm:hidden divide-y divide-white/[0.06]">
+            {logs.map((log, index) => (
+              <motion.div
+                key={log.id}
+                custom={index}
+                variants={rowVariants}
+                initial="hidden"
+                animate="visible"
+                className="p-4 space-y-2"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-navy-800/80 flex items-center justify-center flex-shrink-0">
+                    <ActionIcon action={log.action} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm text-white font-medium break-words">{log.action}</p>
+                    <p className="text-xs text-navy-400 mt-1">
+                      {new Date(log.timestamp).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-lg gradient-purple-blue flex items-center justify-center text-[10px] font-bold text-white uppercase flex-shrink-0">
+                      {log.performedByName.charAt(0)}
+                    </div>
+                    <span className="text-xs text-navy-300 truncate">{log.performedByName}</span>
+                  </div>
+                  {log.targetUserName ? (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-accent-purple/10 text-accent-purple text-[11px] font-medium">
+                      <User className="w-3 h-3" />
+                      {log.targetUserName}
+                    </span>
+                  ) : log.recordId ? (
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-accent-blue/10 text-accent-blue text-[11px] font-medium">
+                      <FileText className="w-3 h-3" />
+                      Record #{log.recordId}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-navy-500">No target</span>
+                  )}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/[0.06]">

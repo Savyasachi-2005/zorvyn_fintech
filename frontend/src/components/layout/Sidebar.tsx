@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -22,8 +21,19 @@ const navItems = [
   { to: '/dashboard/logs', icon: ScrollText, label: 'Audit Logs', roles: ['admin'] },
 ];
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+}
+
+export default function Sidebar({
+  mobileOpen,
+  onCloseMobile,
+  collapsed,
+  onToggleCollapsed,
+}: SidebarProps) {
   const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
 
@@ -37,16 +47,35 @@ export default function Sidebar() {
   );
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 80 : 260 }}
-      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      className="fixed left-0 top-0 z-40 h-screen flex flex-col border-r border-white/[0.06]"
-      style={{
-        background: 'linear-gradient(180deg, rgba(15, 22, 41, 0.95) 0%, rgba(10, 14, 26, 0.98) 100%)',
-        backdropFilter: 'blur(20px)',
-      }}
-    >
+    <>
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.button
+            type="button"
+            aria-label="Close sidebar"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onCloseMobile}
+            className="fixed inset-0 z-40 bg-black/60 lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      <motion.aside
+        initial={false}
+        animate={{
+          width: mobileOpen ? 260 : (collapsed ? 80 : 260),
+        }}
+        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+        className={`fixed left-0 top-0 z-50 h-screen flex flex-col border-r border-white/[0.06] transition-transform duration-300 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        } lg:z-40`}
+        style={{
+          background: 'linear-gradient(180deg, rgba(15, 22, 41, 0.95) 0%, rgba(10, 14, 26, 0.98) 100%)',
+          backdropFilter: 'blur(20px)',
+        }}
+      >
       {/* Logo */}
       <div className="flex items-center h-16 px-5 border-b border-white/[0.06]">
         <motion.div
@@ -79,6 +108,7 @@ export default function Sidebar() {
             key={item.to}
             to={item.to}
             end={item.to === '/dashboard'}
+            onClick={onCloseMobile}
             className="block"
           >
             {({ isActive }) => (
@@ -177,12 +207,13 @@ export default function Sidebar() {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setCollapsed(!collapsed)}
-          className="flex items-center justify-center w-full py-2 rounded-xl text-navy-400 hover:text-white hover:bg-white/5 transition-all duration-200"
+          onClick={onToggleCollapsed}
+          className="hidden lg:flex items-center justify-center w-full py-2 rounded-xl text-navy-400 hover:text-white hover:bg-white/5 transition-all duration-200"
         >
           {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
         </motion.button>
       </div>
-    </motion.aside>
+      </motion.aside>
+    </>
   );
 }

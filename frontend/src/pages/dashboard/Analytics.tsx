@@ -228,20 +228,22 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="glass-card p-6"
+          className="glass-card p-4 sm:p-6"
         >
           <h3 className="text-lg font-semibold text-white mb-1">Income vs Expense</h3>
           <p className="text-sm text-navy-400 mb-6">Monthly comparison</p>
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={trends} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="month" stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} />
-              <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="income" fill="#10b981" radius={[6, 6, 0, 0]} name="Income" />
-              <Bar dataKey="expense" fill="#f43f5e" radius={[6, 6, 0, 0]} name="Expense" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="chart-scroll">
+            <ResponsiveContainer width="100%" height={320}>
+              <BarChart data={trends} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="month" stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} />
+                <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="income" fill="#10b981" radius={[6, 6, 0, 0]} name="Income" />
+                <Bar dataKey="expense" fill="#f43f5e" radius={[6, 6, 0, 0]} name="Expense" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </motion.div>
       )}
 
@@ -252,27 +254,29 @@ export default function Analytics() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="glass-card p-6"
+            className="glass-card p-4 sm:p-6"
           >
             <h3 className="text-lg font-semibold text-white mb-1">Savings Trend</h3>
             <p className="text-sm text-navy-400 mb-6">Monthly net savings</p>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={savingsData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="month" stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} />
-                <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
-                <Tooltip content={<CustomTooltip />} />
-                <Line
-                  type="monotone"
-                  dataKey="savings"
-                  stroke="#8b5cf6"
-                  strokeWidth={3}
-                  dot={{ fill: '#8b5cf6', r: 4, strokeWidth: 2, stroke: '#0a0e1a' }}
-                  activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
-                  name="Savings"
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="chart-scroll">
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={savingsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis dataKey="month" stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#5a7099" tick={{ fill: '#8899bb', fontSize: 12 }} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="savings"
+                    stroke="#8b5cf6"
+                    strokeWidth={3}
+                    dot={{ fill: '#8b5cf6', r: 4, strokeWidth: 2, stroke: '#0a0e1a' }}
+                    activeDot={{ r: 6, stroke: '#8b5cf6', strokeWidth: 2 }}
+                    name="Savings"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </motion.div>
         )}
 
@@ -282,22 +286,24 @@ export default function Analytics() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="glass-card p-6"
+            className="glass-card p-4 sm:p-6"
           >
             <h3 className="text-lg font-semibold text-white mb-1">Spending Profile</h3>
             <p className="text-sm text-navy-400 mb-6">Your spending vs average</p>
-            <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="rgba(255,255,255,0.06)" />
-                <PolarAngleAxis dataKey="category" tick={{ fill: '#8899bb', fontSize: 11 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#5a7099', fontSize: 10 }} />
-                <Radar name="You" dataKey="current" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2} />
-                <Radar name="Average" dataKey="average" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
-                <Legend
-                  formatter={(value: string) => <span className="text-xs text-navy-300">{value}</span>}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+            <div className="chart-scroll">
+              <ResponsiveContainer width="100%" height={280}>
+                <RadarChart data={radarData}>
+                  <PolarGrid stroke="rgba(255,255,255,0.06)" />
+                  <PolarAngleAxis dataKey="category" tick={{ fill: '#8899bb', fontSize: 11 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#5a7099', fontSize: 10 }} />
+                  <Radar name="You" dataKey="current" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.2} strokeWidth={2} />
+                  <Radar name="Average" dataKey="average" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.1} strokeWidth={2} />
+                  <Legend
+                    formatter={(value: string) => <span className="text-xs text-navy-300">{value}</span>}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </motion.div>
         )}
       </div>
@@ -308,7 +314,7 @@ export default function Analytics() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="glass-card p-6"
+          className="glass-card p-4 sm:p-6"
         >
           <h3 className="text-lg font-semibold text-white mb-1">Category Breakdown</h3>
           <p className="text-sm text-navy-400 mb-6">Expense distribution by category</p>
@@ -319,10 +325,10 @@ export default function Analytics() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.8 + i * 0.05 }}
-                className="flex items-center gap-4"
+                className="grid grid-cols-1 sm:grid-cols-[8rem_minmax(0,1fr)_5rem_3rem] gap-2 sm:gap-4 items-center"
               >
-                <div className="w-32 text-sm text-navy-300 flex-shrink-0">{cat.category}</div>
-                <div className="flex-1 h-3 rounded-full bg-navy-800/50 overflow-hidden">
+                <div className="text-sm text-navy-300 truncate">{cat.category}</div>
+                <div className="h-3 rounded-full bg-navy-800/50 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${cat.percentage}%` }}
@@ -331,10 +337,10 @@ export default function Analytics() {
                     style={{ background: cat.fill }}
                   />
                 </div>
-                <div className="w-20 text-right text-sm font-medium text-white">
+                <div className="text-right text-sm font-medium text-white">
                   ₹{cat.amount.toLocaleString()}
                 </div>
-                <div className="w-12 text-right text-xs text-navy-400">{cat.percentage}%</div>
+                <div className="text-right text-xs text-navy-400">{cat.percentage}%</div>
               </motion.div>
             ))}
           </div>

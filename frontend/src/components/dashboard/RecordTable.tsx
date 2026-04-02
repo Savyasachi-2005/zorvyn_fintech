@@ -45,6 +45,8 @@ export default function RecordTable({
   onDelete,
   onView,
 }: RecordTableProps) {
+  const showActions = Boolean(onView || onEdit || onDelete);
+
   const canEdit = (record: RecordType) =>
     userRole === 'admin' || (userRole === 'viewer' && record.userId === currentUserId);
 
@@ -53,13 +55,93 @@ export default function RecordTable({
 
   return (
     <div className="glass-card overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="sm:hidden divide-y divide-white/[0.06]">
+        {records.map((record, index) => (
+          <motion.div
+            key={record.id}
+            custom={index}
+            variants={rowVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="p-4 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-white">{record.notes || 'No notes'}</p>
+                <p className="text-xs text-navy-400 mt-1">{formatDate(record.date)}</p>
+              </div>
+              <span
+                className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                  record.type === 'income'
+                    ? 'bg-accent-emerald/10 text-accent-emerald'
+                    : 'bg-accent-rose/10 text-accent-rose'
+                }`}
+              >
+                {record.type}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-navy-700/50 text-xs font-medium text-navy-300">
+                {record.category}
+              </span>
+              <span
+                className={`text-sm font-semibold ${
+                  record.type === 'income' ? 'text-accent-emerald' : 'text-accent-rose'
+                }`}
+              >
+                {record.type === 'income' ? '+' : '-'}{formatCurrency(record.amount)}
+              </span>
+            </div>
+
+            {(userRole === 'admin' || userRole === 'analyst') && (
+              <p className="text-xs text-navy-400">User: {record.userName || 'Unknown User'}</p>
+            )}
+
+            {showActions && (
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => onView?.(record)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent-blue/10 text-accent-blue text-xs font-medium"
+                  title="View"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  View
+                </button>
+                {canEdit(record) && (
+                  <button
+                    onClick={() => onEdit?.(record)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent-purple/10 text-accent-purple text-xs font-medium"
+                    title="Edit"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    Edit
+                  </button>
+                )}
+                {canDelete(record) && (
+                  <button
+                    onClick={() => onDelete?.(record.id)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-accent-rose/10 text-accent-rose text-xs font-medium"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                )}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/[0.06]">
               {(userRole === 'admin' || userRole === 'analyst'
-                ? ['User', 'Notes', 'Category', 'Type', 'Amount', 'Date', 'Actions']
-                : ['Notes', 'Category', 'Type', 'Amount', 'Date', 'Actions']
+                ? ['User', 'Notes', 'Category', 'Type', 'Amount', 'Date', ...(showActions ? ['Actions'] : [])]
+                : ['Notes', 'Category', 'Type', 'Amount', 'Date', ...(showActions ? ['Actions'] : [])]
               ).map((header) => (
                 <th
                   key={header}
@@ -124,41 +206,43 @@ export default function RecordTable({
                   <td className="px-5 py-4 text-sm text-navy-300">
                     {formatDate(record.date)}
                   </td>
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => onView?.(record)}
-                        className="p-1.5 rounded-lg hover:bg-accent-blue/10 text-navy-400 hover:text-accent-blue transition-colors duration-200"
-                        title="View"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </motion.button>
-                      {canEdit(record) && (
+                  {showActions && (
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                         <motion.button
-                          whileHover={{ scale: 1.15 }}
+                          whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={() => onEdit?.(record)}
-                          className="p-1.5 rounded-lg hover:bg-accent-purple/10 text-navy-400 hover:text-accent-purple transition-colors duration-200"
-                          title="Edit"
+                          onClick={() => onView?.(record)}
+                          className="p-1.5 rounded-lg hover:bg-accent-blue/10 text-navy-400 hover:text-accent-blue transition-colors duration-200"
+                          title="View"
                         >
-                          <Edit2 className="w-4 h-4" />
+                          <Eye className="w-4 h-4" />
                         </motion.button>
-                      )}
-                      {canDelete(record) && (
-                        <motion.button
-                          whileHover={{ scale: 1.15 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => onDelete?.(record.id)}
-                          className="p-1.5 rounded-lg hover:bg-accent-rose/10 text-navy-400 hover:text-accent-rose transition-colors duration-200"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </motion.button>
-                      )}
-                    </div>
-                  </td>
+                        {canEdit(record) && (
+                          <motion.button
+                            whileHover={{ scale: 1.15 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => onEdit?.(record)}
+                            className="p-1.5 rounded-lg hover:bg-accent-purple/10 text-navy-400 hover:text-accent-purple transition-colors duration-200"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </motion.button>
+                        )}
+                        {canDelete(record) && (
+                          <motion.button
+                            whileHover={{ scale: 1.15 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => onDelete?.(record.id)}
+                            className="p-1.5 rounded-lg hover:bg-accent-rose/10 text-navy-400 hover:text-accent-rose transition-colors duration-200"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </motion.button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </motion.tr>
               ))}
             </AnimatePresence>
